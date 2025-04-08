@@ -1,0 +1,21 @@
+[project]
+name = "scispacy-dockerized"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "en-core-sci-lg",
+    "fastapi[standard]>=0.115.12",
+    "negspacy>=1.0.4",
+    "scispacy>=0.5.5",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "ruff>=0.11.4",
+]
+
+[tool.uv.sources]
+en-core-sci-lg = { url = "https://s3-us-west-2.amazonaws.com/ai2-s2-scispacy/releases/v0.5.4/en_core_sci_lg-0.5.4.tar.gz" }
