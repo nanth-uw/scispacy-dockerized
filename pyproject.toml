@@ -15,7 +15,10 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "faker>=37.1.0",
+    "pandas>=2.2.3",
     "pytest>=8.3.5",
+    "rich>=14.0.0",
     "ruff>=0.11.4",
 ]
 
