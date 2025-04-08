@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        platform: [linux/amd64, linux/arm64, windows/amd64]  # Matrix for multiple platforms
+        platform: [linux/amd64, linux/arm64]  # Matrix for multiple platforms
 
     steps:
     - name: Checkout repository
