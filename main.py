@@ -7,6 +7,11 @@ from pydantic import AfterValidator, BaseModel, Field
 from scispacy.linking import EntityLinker
 from spacy.language import Language
 
+# these two have to stay for "scope" via spacy
+# NOTE: do NOT let ruff remove these imports
+from negspacy.negation import Negex # scope
+from scispacy.abbreviation import AbbreviationDetector # scope
+
 
 def build_models() -> tuple[Language, EntityLinker]:
     nlp = spacy.load(
@@ -14,8 +19,11 @@ def build_models() -> tuple[Language, EntityLinker]:
         # remove things not needed for NER, increases perf
         exclude=["tagger", "lemmatizer", "textcat"],
     )
+    print("Loaded base model")
     nlp.add_pipe("negex")
+    print("Added negex")
     nlp.add_pipe("abbreviation_detector", config={"make_serializable": True})
+    print("Added abbreviation_detector")
     nlp.add_pipe(
         "scispacy_linker",
         config={
@@ -33,6 +41,7 @@ def build_models() -> tuple[Language, EntityLinker]:
             "linker_name": "umls",
         },
     )
+    print("Added umls linker")
     linker: EntityLinker = nlp.get_pipe("scispacy_linker")
     return nlp, linker
 
@@ -53,7 +62,7 @@ def _is_unique_ids(entries: list[TextData]) -> list[TextData]:
 
 
 class TextDataList(BaseModel):
-    notes: Annotated[
+    entries: Annotated[
         list[TextData], AfterValidator(_is_unique_ids), Field(max_length=100)
     ]
 
@@ -69,35 +78,34 @@ class NEROutput(BaseModel):
 
 
 class NEROutputList(BaseModel):
-    entries: list[NEROutput]
+    results: list[NEROutput]
 
+
+NER, LINKER = build_models()
 
 app = FastAPI(
     responses={404: {"description": "Not found"}},
 )
 
 
-NER, LINKER = build_models()
-
-
 @app.post("/ner")
 async def extract_ner(items: TextDataList) -> NEROutputList:
     output: list[NEROutput] = []
     timestamp = datetime.now()
-    for id_, text in items.entries:
-        doc = NER(text)
+    for entry in items.entries:
+        doc = NER(entry.text)
         for ent in doc.ents:
-            for kb_ent in ent._.kb_ents:
-                concept = LINKER[kb_ent[0]]
+            for kb_ent, score in ent._.kb_ents:
+                concept = LINKER.kb.cui_to_entity[kb_ent]
                 out = NEROutput(
-                    text_id=id_,
+                    text_id=entry.text_id,
                     umls_cui=concept.concept_id.strip(),
                     umls_name=concept.canonical_name.strip(),
                     matched_entity=ent.text.strip(),
-                    score=kb_ent[1],
+                    score=score,
                     negated=ent._.negex,
                     processed_at=timestamp,
                 )
                 output.append(out)
-    results = NEROutputList(entries=output)
+    results = NEROutputList(results=output)
     return results
