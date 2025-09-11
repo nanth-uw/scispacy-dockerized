@@ -98,7 +98,7 @@ async def extract_ner(items: TextDataList) -> NEROutputList:
             for kb_ent, score in ent._.kb_ents:
                 concept = LINKER.kb.cui_to_entity[kb_ent]
                 out = NEROutput(
-                    text_id=entry.id,
+                    id=entry.id,
                     umls_cui=concept.concept_id.strip(),
                     umls_name=concept.canonical_name.strip(),
                     matched_entity=ent.text.strip(),
