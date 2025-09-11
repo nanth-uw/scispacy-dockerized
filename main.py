@@ -48,12 +48,12 @@ def build_models() -> tuple[Language, EntityLinker]:
 
 class TextData(BaseModel):
     text: str
-    text_id: str | int
+    id: str | int
 
 
 def _is_unique_ids(entries: list[TextData]) -> list[TextData]:
     entries_length = len(entries)
-    unique_ids = len(list(set((x.text_id for x in entries))))
+    unique_ids = len(list(set((x.id for x in entries))))
     if entries_length != unique_ids:
         raise ValueError(
             f"note ids were not unique, found: {unique_ids} unique_ids among {entries_length} notes"
@@ -68,7 +68,7 @@ class TextDataList(BaseModel):
 
 
 class NEROutput(BaseModel):
-    text_id: str | int
+    id: str | int
     umls_cui: str
     umls_name: str
     matched_entity: str
@@ -98,7 +98,7 @@ async def extract_ner(items: TextDataList) -> NEROutputList:
             for kb_ent, score in ent._.kb_ents:
                 concept = LINKER.kb.cui_to_entity[kb_ent]
                 out = NEROutput(
-                    text_id=entry.text_id,
+                    text_id=entry.id,
                     umls_cui=concept.concept_id.strip(),
                     umls_name=concept.canonical_name.strip(),
                     matched_entity=ent.text.strip(),
