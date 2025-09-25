@@ -7,6 +7,8 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y g++
 
 RUN uv python install 3.12
 
+ENV UVICORN_WORKERS=1
+
 WORKDIR /app
 
 COPY pyproject.toml .
@@ -15,4 +17,10 @@ COPY main.py .
 
 RUN uv sync --frozen --no-dev
 
-CMD ["uv", "run", "--no-sync", "fastapi", "run", "--host", "0.0.0.0", "--port", "8000", "/app/main.py"]
+CMD ["uv", "run", 
+  "--no-sync", "fastapi", "run",
+  "--host", "0.0.0.0",
+  "--port", "8000",
+  "--workers", $UVICORN_WORKERS,
+  "/app/main.py"
+]
